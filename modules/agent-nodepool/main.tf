@@ -103,6 +103,12 @@ data "cloudinit_config" "init" {
   }
 }
 
+
+resource "local_file" "name" {
+  content = data.cloudinit_config.init.rendered
+  filename = "userdata.sh"
+}
+
 #
 # RKE2 Node Pool
 #

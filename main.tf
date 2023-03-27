@@ -1,3 +1,4 @@
+
 locals {
   # Create a unique cluster name we'll prefix to all resources created and ensure it's lowercase
   uname = var.unique_suffix ? lower("${var.cluster_name}-${random_string.uid.result}") : lower(var.cluster_name)
@@ -9,8 +10,33 @@ locals {
   ccm_tags = {
     "kubernetes.io/cluster/${local.uname}" = "owned"
   }
+}
 
-  cluster_data = {
+
+#
+# Controlplane Load Balancer
+#
+module "cp_lb" {
+  source  = "./modules/nlb"
+  name    = local.uname
+  vpc_id  = var.vpc_id
+  subnets = var.subnets
+
+  enable_cross_zone_load_balancing = var.controlplane_enable_cross_zone_load_balancing
+  internal                         = var.controlplane_internal
+  access_logs_bucket               = var.controlplane_access_logs_bucket
+
+  cp_ingress_cidr_blocks            = var.controlplane_allowed_cidrs
+  cp_supervisor_ingress_cidr_blocks = var.controlplane_allowed_cidrs
+
+  tags = merge({}, local.default_tags, local.default_tags, var.tags)
+}
+
+
+
+
+locals {
+    cluster_data = {
     name       = local.uname
     server_url = module.cp_lb.dns
     cluster_sg = aws_security_group.cluster.id
@@ -45,24 +71,6 @@ module "statestore" {
   attach_deny_insecure_transport_policy = var.statestore_attach_deny_insecure_transport_policy
 }
 
-#
-# Controlplane Load Balancer
-#
-module "cp_lb" {
-  source  = "./modules/nlb"
-  name    = local.uname
-  vpc_id  = var.vpc_id
-  subnets = var.subnets
-
-  enable_cross_zone_load_balancing = var.controlplane_enable_cross_zone_load_balancing
-  internal                         = var.controlplane_internal
-  access_logs_bucket               = var.controlplane_access_logs_bucket
-
-  cp_ingress_cidr_blocks            = var.controlplane_allowed_cidrs
-  cp_supervisor_ingress_cidr_blocks = var.controlplane_allowed_cidrs
-
-  tags = merge({}, local.default_tags, local.default_tags, var.tags)
-}
 
 #
 # Security Groups
@@ -181,6 +189,8 @@ resource "aws_iam_role_policy" "put_kubeconfig" {
 module "servers" {
   source = "./modules/nodepool"
   name   = "${local.uname}-server"
+
+  
 
   vpc_id                      = var.vpc_id
   subnets                     = var.subnets

@@ -4,32 +4,29 @@ provider "aws" {
 
 locals {
   cluster_name = "cloud-enabled"
-  aws_region   = "us-gov-west-1"
-
+  aws_region   = "ap-northeast-2"
+ 
   tags = {
     "terraform" = "true",
     "env"       = "cloud-enabled",
   }
 }
 
-data "aws_ami" "rhel7" {
-  most_recent = true
-  owners      = ["219670896067"] # owner is specific to aws gov cloud
 
-  filter {
-    name   = "name"
-    values = ["RHEL-7*"]
-  }
+# Key Pair
+resource "tls_private_key" "ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
 
-  filter {
-    name   = "architecture"
-    values = ["x86_64"]
-  }
+resource "local_file" "ssh_pem" {
+  filename        = "${local.cluster_name}.pem"
+  content         = tls_private_key.ssh.private_key_openssh
+  file_permission = "0600"
 }
 
 data "aws_ami" "rhel8" {
   most_recent = true
-  owners      = ["219670896067"] # owner is specific to aws gov cloud
 
   filter {
     name   = "name"
@@ -40,48 +37,6 @@ data "aws_ami" "rhel8" {
     name   = "architecture"
     values = ["x86_64"]
   }
-}
-
-data "aws_ami" "centos7" {
-  most_recent = true
-  owners      = ["345084742485"] # owner is specific to aws gov cloud
-
-  filter {
-    name   = "name"
-    values = ["CentOS Linux 7 x86_64 HVM EBS*"]
-  }
-
-  filter {
-    name   = "architecture"
-    values = ["x86_64"]
-  }
-}
-
-data "aws_ami" "centos8" {
-  most_recent = true
-  owners      = ["345084742485"] # owner is specific to aws gov cloud
-
-  filter {
-    name   = "name"
-    values = ["CentOS Linux 8 x86_64 HVM EBS*"]
-  }
-
-  filter {
-    name   = "architecture"
-    values = ["x86_64"]
-  }
-}
-
-# Key Pair
-resource "tls_private_key" "ssh" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
-
-resource "local_file" "ssh_pem" {
-  filename        = "${local.cluster_name}.pem"
-  content         = tls_private_key.ssh.private_key_pem
-  file_permission = "0600"
 }
 
 #
@@ -131,9 +86,11 @@ module "rke2" {
 
   ami                   = data.aws_ami.rhel8.image_id # Note: Multi OS is primarily for example purposes
   ssh_authorized_keys   = [tls_private_key.ssh.public_key_openssh]
-  instance_type         = "t3a.medium"
+  instance_type         = "t3.medium"
   controlplane_internal = false # Note this defaults to best practice of true, but is explicitly set to public for demo purposes
-  servers               = 1
+  servers               = 2
+
+  wait_for_capacity_timeout = "60m"
 
   # Enable AWS Cloud Controller Manager
   enable_ccm = true
@@ -161,7 +118,10 @@ module "agents" {
   ssh_authorized_keys = [tls_private_key.ssh.public_key_openssh]
   spot                = true
   asg                 = { min : 1, max : 10, desired : 2 }
-  instance_type       = "t3a.large"
+  instance_type       = "t3.medium"
+
+  wait_for_capacity_timeout = "60m"
+  
 
   # Enable AWS Cloud Controller Manager and Cluster Autoscaler
   enable_ccm        = true
@@ -199,6 +159,6 @@ resource "null_resource" "kubeconfig" {
 
   provisioner "local-exec" {
     interpreter = ["bash", "-c"]
-    command     = "aws s3 cp ${module.rke2.kubeconfig_path} rke2.yaml"
+    command     = "aws s3 cp ${module.rke2.kubeconfig_path} kubeconfig.yaml"
   }
 }

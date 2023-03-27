@@ -30,7 +30,13 @@ read_os() {
 }
 
 get_installer() {
-  curl -fsSL https://get.rke2.io -o install.sh
+
+  while ! curl -fsSL -v https://get.rke2.io -o install.sh
+  do 
+    echo "downloading rke install script failed...retrying in 10 seconds"
+    sleep 10
+  done
+
   chmod u+x install.sh
 }
 
