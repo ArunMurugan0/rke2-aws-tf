@@ -27,14 +27,14 @@ data "cloudinit_config" "this" {
     })
   }
   part {
-    filename     = "00_pre.sh"
+    filename     = "10_pre.sh"
     content_type = "text/x-shellscript"
     content      = module.init.pre_templated
   }
   dynamic "part" {
     for_each = var.download ? [1] : []
     content {
-      filename     = "10_download.sh"
+      filename     = "00_download.sh"
       content_type = "text/x-shellscript"
       content = templatefile("${path.module}/modules/common/download.sh", {
         # Must not use `version` here since that is reserved
