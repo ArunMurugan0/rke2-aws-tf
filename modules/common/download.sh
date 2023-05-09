@@ -93,8 +93,9 @@ do_download() {
     # TODO: Determine minimum supported version, for now just carry on assuming ignorance
     apt update -y
     apt install -y unzip less iptables resolvconf linux-headers-$(uname -r) telnet
-    hostnamectl set-hostname "$(curl http://169.254.169.254/latest/meta-data/hostname)"
-
+    # hostnamectl set-hostname "$(curl http://169.254.169.254/latest/meta-data/hostname)"
+    hostnamectl set-hostname localhost
+    
     INSTALL_RKE2_METHOD='tar' INSTALL_RKE2_TYPE="${type}" ./install.sh
     
     install_awscli
