@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "bucket" {
-  bucket        = lower("${var.name}-rke2")
+  bucket_prefix        = lower("${var.name}-rke2")
   force_destroy = true
 
   tags = merge({}, var.tags)

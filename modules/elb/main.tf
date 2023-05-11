@@ -6,7 +6,7 @@ locals {
 }
 
 resource "aws_security_group" "controlplane" {
-  name        = local.controlplane_name
+  name_prefix        = local.controlplane_name
   description = "${local.controlplane_name} sg"
   vpc_id      = var.vpc_id
 
@@ -44,7 +44,7 @@ resource "aws_security_group_rule" "egress" {
 }
 
 resource "aws_elb" "controlplane" {
-  name = local.controlplane_name
+  name_prefix = local.controlplane_name
 
   internal        = var.internal
   subnets         = var.subnets

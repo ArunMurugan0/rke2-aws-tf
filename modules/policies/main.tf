@@ -13,7 +13,7 @@ data "aws_iam_policy_document" "ec2_access" {
 }
 
 resource "aws_iam_policy" "ec2_ebs_policy" {
-  name = "ec2_ebs_policy"
+  name_prefix = "ec2_ebs_policy"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [

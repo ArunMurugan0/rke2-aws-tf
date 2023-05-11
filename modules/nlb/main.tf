@@ -6,7 +6,7 @@ locals {
 }
 
 resource "aws_security_group" "controlplane" {
-  name        = local.controlplane_name
+  name_prefix       = local.controlplane_name
   description = "${local.controlplane_name} sg"
   vpc_id      = var.vpc_id
 
@@ -73,14 +73,14 @@ resource "aws_lb_listener" "supervisor" {
 }
 
 resource "aws_lb_target_group" "supervisor" {
-  name     = "${local.controlplane_name}-${var.cp_supervisor_port}"
+  name_prefix     = "${local.controlplane_name}-${var.cp_supervisor_port}"
   port     = var.cp_supervisor_port
   protocol = "TCP"
   vpc_id   = var.vpc_id
 }
 
 resource "aws_lb" "controlplane" {
-  name = local.controlplane_name
+  name_prefix = local.controlplane_name
 
   internal           = var.internal
   load_balancer_type = "network"

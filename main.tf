@@ -71,7 +71,7 @@ module "cp_lb" {
 
 # Shared Cluster Security Group
 resource "aws_security_group" "cluster" {
-  name        = "${local.uname}-rke2-cluster"
+  name_prefix        = "${local.uname}-rke2-cluster"
   description = "Shared ${local.uname} cluster security group"
   vpc_id      = var.vpc_id
 
@@ -103,7 +103,7 @@ resource "aws_security_group_rule" "cluster_egress" {
 
 # Server Security Group
 resource "aws_security_group" "server" {
-  name        = "${local.uname}-rke2-server"
+  name_prefix        = "${local.uname}-rke2-server"
   vpc_id      = var.vpc_id
   description = "${local.uname} rke2 server node pool"
   tags        = merge(local.default_tags, var.tags)
