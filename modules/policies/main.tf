@@ -13,7 +13,7 @@ data "aws_iam_policy_document" "ec2_access" {
 }
 
 resource "aws_iam_role" "this" {
-  name = var.name
+  name_prefix = var.name
 
   assume_role_policy   = data.aws_iam_policy_document.ec2_access.json
   permissions_boundary = var.permissions_boundary
@@ -25,6 +25,6 @@ resource "aws_iam_role" "this" {
 # Profile
 #
 resource "aws_iam_instance_profile" "this" {
-  name = var.name
+  name = aws_iam_role.this.name
   role = aws_iam_role.this.name
 }
