@@ -16,6 +16,8 @@ resource "aws_launch_template" "this" {
   instance_type = var.instance_type
   user_data     = var.userdata
 
+  update_default_version = true
+
   metadata_options {
     http_endpoint               = var.metadata_options["http_endpoint"]
     http_tokens                 = var.metadata_options["http_tokens"]
@@ -88,7 +90,7 @@ resource "aws_autoscaling_group" "this" {
 
     content {
       id      = aws_launch_template.this.id
-      version = "$Latest"
+      version = "$Default"
     }
   }
 
