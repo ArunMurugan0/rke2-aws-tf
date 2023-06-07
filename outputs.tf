@@ -14,10 +14,6 @@ output "cluster_sg" {
   value       = local.cluster_data.cluster_sg
 }
 
-output "server_url" {
-  value = local.cluster_data.server_url
-}
-
 output "server_sg" {
   value = aws_security_group.server.id
 }

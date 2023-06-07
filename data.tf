@@ -1,7 +1,7 @@
 module "init" {
   source = "./modules/userdata"
 
-  server_url    = module.cp_lb.dns
+  server_url    = "localhost"
   token_bucket  = module.statestore.bucket
   token_object  = module.statestore.token_object
   config        = var.rke2_config

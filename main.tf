@@ -12,11 +12,9 @@ locals {
 
   cluster_data = {
     name       = local.uname
-    server_url = module.cp_lb.dns
     cluster_sg = aws_security_group.cluster.id
     token      = module.statestore.token
   }
-  target_group_arns = module.cp_lb.target_group_arns
 }
 
 resource "random_string" "uid" {
@@ -46,24 +44,26 @@ module "statestore" {
   attach_deny_insecure_transport_policy = var.statestore_attach_deny_insecure_transport_policy
 }
 
+
+
 #
 # Controlplane Load Balancer
 #
-module "cp_lb" {
-  source  = "./modules/nlb"
-  name    = local.uname
-  vpc_id  = var.vpc_id
-  subnets = var.subnets
+# module "cp_lb" {
+#   source  = "./modules/nlb"
+#   name    = local.uname
+#   vpc_id  = var.vpc_id
+#   subnets = var.subnets
 
-  enable_cross_zone_load_balancing = var.controlplane_enable_cross_zone_load_balancing
-  internal                         = var.controlplane_internal
-  access_logs_bucket               = var.controlplane_access_logs_bucket
+#   enable_cross_zone_load_balancing = var.controlplane_enable_cross_zone_load_balancing
+#   internal                         = var.controlplane_internal
+#   access_logs_bucket               = var.controlplane_access_logs_bucket
 
-  cp_ingress_cidr_blocks            = var.controlplane_allowed_cidrs
-  cp_supervisor_ingress_cidr_blocks = var.controlplane_allowed_cidrs
+#   cp_ingress_cidr_blocks            = var.controlplane_allowed_cidrs
+#   cp_supervisor_ingress_cidr_blocks = var.controlplane_allowed_cidrs
 
-  tags = merge({}, local.default_tags, local.default_tags, var.tags)
-}
+#   tags = merge({}, local.default_tags, local.default_tags, var.tags)
+# }
 
 #
 # Security Groups
@@ -110,21 +110,21 @@ resource "aws_security_group" "server" {
 }
 
 resource "aws_security_group_rule" "server_cp" {
-  from_port                = 6443
-  to_port                  = 6443
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.server.id
-  type                     = "ingress"
-  source_security_group_id = module.cp_lb.security_group
+  from_port         = 6443
+  to_port           = 6443
+  protocol          = "tcp"
+  security_group_id = aws_security_group.server.id
+  type              = "ingress"
+  cidr_blocks       = ["0.0.0.0/0"]
 }
 
 resource "aws_security_group_rule" "server_cp_supervisor" {
-  from_port                = 9345
-  to_port                  = 9345
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.server.id
-  type                     = "ingress"
-  source_security_group_id = module.cp_lb.security_group
+  from_port         = 9345
+  to_port           = 9345
+  protocol          = "tcp"
+  security_group_id = aws_security_group.server.id
+  type              = "ingress"
+  cidr_blocks       = ["0.0.0.0/0"]
 }
 
 #
@@ -189,10 +189,10 @@ module "servers" {
   instance_type               = var.instance_type
   block_device_mappings       = var.block_device_mappings
   extra_block_device_mappings = var.extra_block_device_mappings
-  vpc_security_group_ids      = concat([aws_security_group.server.id, aws_security_group.cluster.id, module.cp_lb.security_group], var.extra_security_group_ids)
+  vpc_security_group_ids      = concat([aws_security_group.server.id, aws_security_group.cluster.id, aws_security_group.controlplane.id], var.extra_security_group_ids)
   spot                        = var.spot
   #load_balancers              = [module.cp_lb.name]
-  target_group_arns           = local.target_group_arns
+  target_group_arns           = []
   wait_for_capacity_timeout   = var.wait_for_capacity_timeout
   metadata_options            = var.metadata_options
   associate_public_ip_address = var.associate_public_ip_address
